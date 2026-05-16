@@ -1,58 +1,58 @@
 // ─── State ───────────────────────────────────────────────────────────────────
 const state = {
-  images: [],   // { id, name, img, url }
-  rawCode: ''   // generated plain-text code
+  images: [], // { id, name, img, url }
+  rawCode: "", // generated plain-text code
 };
 
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
-const dropzone        = document.getElementById('dropzone');
-const fileInput       = document.getElementById('file-input');
-const imageList       = document.getElementById('image-list');
-const emptyHint       = document.getElementById('empty-hint');
-const btnGenerate     = document.getElementById('btn-generate');
-const btnClear        = document.getElementById('btn-clear');
-const btnCopy         = document.getElementById('btn-copy');
-const btnDownload     = document.getElementById('btn-download');
-const codeOutput      = document.getElementById('code-output');
-const codePlaceholder = document.getElementById('code-placeholder');
-const outputStats     = document.getElementById('output-stats');
-const canvas          = document.getElementById('canvas');
-const ctx             = canvas.getContext('2d');
-const toast           = document.getElementById('toast');
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("file-input");
+const imageList = document.getElementById("image-list");
+const emptyHint = document.getElementById("empty-hint");
+const btnGenerate = document.getElementById("btn-generate");
+const btnClear = document.getElementById("btn-clear");
+const btnCopy = document.getElementById("btn-copy");
+const btnDownload = document.getElementById("btn-download");
+const codeOutput = document.getElementById("code-output");
+const codePlaceholder = document.getElementById("code-placeholder");
+const outputStats = document.getElementById("output-stats");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const toast = document.getElementById("toast");
 
 // Settings
-const selFormat    = document.getElementById('format');
-const sliderThresh = document.getElementById('threshold');
-const valThresh    = document.getElementById('threshold-val');
-const thresholdRow = document.getElementById('threshold-row');
-const chkResize    = document.getElementById('do-resize');
-const resizeOpts   = document.getElementById('resize-options');
-const inpW         = document.getElementById('resize-w');
-const inpH         = document.getElementById('resize-h');
-const chkAspect    = document.getElementById('keep-aspect');
-const chkProgmem   = document.getElementById('use-progmem');
-const chkDims      = document.getElementById('add-dims');
-const selBPL       = document.getElementById('bytes-per-line');
+const selFormat = document.getElementById("format");
+const sliderThresh = document.getElementById("threshold");
+const valThresh = document.getElementById("threshold-val");
+const thresholdRow = document.getElementById("threshold-row");
+const chkResize = document.getElementById("do-resize");
+const resizeOpts = document.getElementById("resize-options");
+const inpW = document.getElementById("resize-w");
+const inpH = document.getElementById("resize-h");
+const chkAspect = document.getElementById("keep-aspect");
+const chkProgmem = document.getElementById("use-progmem");
+const chkDims = document.getElementById("add-dims");
+const selBPL = document.getElementById("bytes-per-line");
 
 // ─── Upload: Drop Zone ────────────────────────────────────────────────────────
-dropzone.addEventListener('click', () => fileInput.click());
+dropzone.addEventListener("click", () => fileInput.click());
 
-dropzone.addEventListener('dragover', e => {
+dropzone.addEventListener("dragover", (e) => {
   e.preventDefault();
-  dropzone.classList.add('drag-over');
+  dropzone.classList.add("drag-over");
 });
 
-dropzone.addEventListener('dragleave', () => {
-  dropzone.classList.remove('drag-over');
+dropzone.addEventListener("dragleave", () => {
+  dropzone.classList.remove("drag-over");
 });
 
-dropzone.addEventListener('drop', e => {
+dropzone.addEventListener("drop", (e) => {
   e.preventDefault();
-  dropzone.classList.remove('drag-over');
+  dropzone.classList.remove("drag-over");
   handleFiles(e.dataTransfer.files);
 });
 
-fileInput.addEventListener('change', () => {
+fileInput.addEventListener("change", () => {
   handleFiles(fileInput.files);
 });
 
@@ -61,11 +61,11 @@ fileInput.addEventListener('change', () => {
  * @param {FileList} files
  */
 function handleFiles(files) {
-  [...files].forEach(file => {
-    if (!file.type.startsWith('image/')) return;
+  [...files].forEach((file) => {
+    if (!file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
         const id = Date.now() + Math.random();
@@ -77,31 +77,32 @@ function handleFiles(files) {
     };
     reader.readAsDataURL(file);
   });
-  fileInput.value = '';
+  fileInput.value = "";
 }
 
 // ─── Image List ───────────────────────────────────────────────────────────────
 function renderImageList() {
-  imageList.innerHTML = '';
+  imageList.innerHTML = "";
 
   if (state.images.length === 0) {
     imageList.appendChild(emptyHint);
     return;
   }
 
-  state.images.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'image-item';
+  state.images.forEach((item) => {
+    const itemName = esc(item.name);
+    const div = document.createElement("div");
+    div.className = "image-item";
     div.innerHTML = `
-      <img class="image-thumb" src="${item.url}" alt="${item.name}" />
+      <img class="image-thumb" src="${item.url}" alt="${itemName}" />
       <div class="image-info">
-        <div class="image-name">${item.name}</div>
-        <div class="image-size">${item.img.width} × ${item.img.height} px</div>
+        <div class="image-name">${itemName}</div>
+        <div class="image-size">${item.img.width} x ${item.img.height} px</div>
       </div>
-      <button class="image-remove" title="Entfernen">×</button>
+      <button class="image-remove" title="Entfernen">x</button>
     `;
-    div.querySelector('.image-remove').addEventListener('click', () => {
-      state.images = state.images.filter(i => i.id !== item.id);
+    div.querySelector(".image-remove").addEventListener("click", () => {
+      state.images = state.images.filter((i) => i.id !== item.id);
       renderImageList();
       updateButtons();
     });
@@ -116,17 +117,17 @@ function updateButtons() {
 }
 
 // ─── Settings UI ──────────────────────────────────────────────────────────────
-selFormat.addEventListener('change', () => {
-  const mono = selFormat.value.startsWith('mono');
-  thresholdRow.style.display = mono ? 'flex' : 'none';
+selFormat.addEventListener("change", () => {
+  const mono = selFormat.value.startsWith("mono");
+  thresholdRow.style.display = mono ? "flex" : "none";
 });
 
-sliderThresh.addEventListener('input', () => {
+sliderThresh.addEventListener("input", () => {
   valThresh.textContent = sliderThresh.value;
 });
 
-chkResize.addEventListener('change', () => {
-  resizeOpts.style.display = chkResize.checked ? 'block' : 'none';
+chkResize.addEventListener("change", () => {
+  resizeOpts.style.display = chkResize.checked ? "block" : "none";
 });
 
 // ─── Code Generation ──────────────────────────────────────────────────────────
@@ -158,14 +159,14 @@ function getTargetSize(origW, origH) {
  * @returns {string}
  */
 function sanitizeName(filename) {
-  let name = filename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_');
-  if (/^\d/.test(name)) name = '_' + name;
+  let name = filename.replace(/\.[^.]+$/, "").replace(/[^a-zA-Z0-9]/g, "_");
+  if (/^\d/.test(name)) name = "_" + name;
   return name;
 }
 
 /** RGB → RGB565 (uint16_t) */
 function rgb565(r, g, b) {
-  return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+  return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
 }
 
 /** RGB → 8-bit luminance */
@@ -193,14 +194,18 @@ function getPixels(imgEl, w, h) {
  * @param {number} v - value 0-255
  * @returns {string}
  */
-function hex8(v) { return '0x' + v.toString(16).toUpperCase().padStart(2, '0'); }
+function hex8(v) {
+  return "0x" + v.toString(16).toUpperCase().padStart(2, "0");
+}
 
 /**
  * Format a 16-bit value as a zero-padded hex literal.
  * @param {number} v
  * @returns {string}
  */
-function hex16(v) { return '0x' + v.toString(16).toUpperCase().padStart(4, '0'); }
+function hex16(v) {
+  return "0x" + v.toString(16).toUpperCase().padStart(4, "0");
+}
 
 /**
  * Split an array into lines of `bpl` items each.
@@ -212,7 +217,9 @@ function chunkLines(values, bpl) {
   const lines = [];
   for (let i = 0; i < values.length; i += bpl) {
     const isLast = i + bpl >= values.length;
-    lines.push('  ' + values.slice(i, i + bpl).join(', ') + (isLast ? '' : ','));
+    lines.push(
+      "  " + values.slice(i, i + bpl).join(", ") + (isLast ? "" : ","),
+    );
   }
   return lines;
 }
@@ -223,19 +230,19 @@ function chunkLines(values, bpl) {
  * @returns {string}
  */
 function generateForImage(item) {
-  const format    = selFormat.value;
-  const progmem   = chkProgmem.checked;
-  const addDims   = chkDims.checked;
-  const bpl       = parseInt(selBPL.value);
+  const format = selFormat.value;
+  const progmem = chkProgmem.checked;
+  const addDims = chkDims.checked;
+  const bpl = parseInt(selBPL.value);
   const threshold = parseInt(sliderThresh.value);
-  const varName   = sanitizeName(item.name);
-  const [tw, th]  = getTargetSize(item.img.width, item.img.height);
-  const pixels    = getPixels(item.img, tw, th);
-  const progStr   = progmem ? ' PROGMEM' : '';
-  const lines     = [];
+  const varName = sanitizeName(item.name);
+  const [tw, th] = getTargetSize(item.img.width, item.img.height);
+  const pixels = getPixels(item.img, tw, th);
+  const progStr = progmem ? " PROGMEM" : "";
+  const lines = [];
 
   // ── Header comment
-  lines.push(`// ${item.name}  (${tw}×${th} px, ${format.toUpperCase()})`);
+  lines.push(`// ${item.name}  (${tw}x${th} px, ${format.toUpperCase()})`);
 
   if (addDims) {
     const nameUp = varName.toUpperCase();
@@ -244,7 +251,7 @@ function generateForImage(item) {
   }
 
   // ── Format-specific conversion
-  if (format === 'rgb565') {
+  if (format === "rgb565") {
     const values = [];
     for (let i = 0; i < pixels.length; i += 4) {
       values.push(hex16(rgb565(pixels[i], pixels[i + 1], pixels[i + 2])));
@@ -253,8 +260,7 @@ function generateForImage(item) {
     lines.push(`const uint16_t ${varName}[]${progStr} = {`);
     lines.push(...chunkLines(values, bpl));
     lines.push(`};`);
-
-  } else if (format === 'rgb888') {
+  } else if (format === "rgb888") {
     const values = [];
     for (let i = 0; i < pixels.length; i += 4) {
       values.push(hex8(pixels[i]), hex8(pixels[i + 1]), hex8(pixels[i + 2]));
@@ -263,8 +269,7 @@ function generateForImage(item) {
     lines.push(`const uint8_t ${varName}[]${progStr} = {`);
     lines.push(...chunkLines(values, bpl));
     lines.push(`};`);
-
-  } else if (format === 'gray8') {
+  } else if (format === "gray8") {
     const values = [];
     for (let i = 0; i < pixels.length; i += 4) {
       values.push(hex8(toGray(pixels[i], pixels[i + 1], pixels[i + 2])));
@@ -273,27 +278,29 @@ function generateForImage(item) {
     lines.push(`const uint8_t ${varName}[]${progStr} = {`);
     lines.push(...chunkLines(values, bpl));
     lines.push(`};`);
-
-  } else if (format === 'mono_h') {
+  } else if (format === "mono_h") {
     // Horizontal packing: MSB = leftmost pixel
     const bits = [];
     for (let i = 0; i < pixels.length; i += 4) {
-      bits.push(toGray(pixels[i], pixels[i + 1], pixels[i + 2]) > threshold ? 1 : 0);
+      bits.push(
+        toGray(pixels[i], pixels[i + 1], pixels[i + 2]) > threshold ? 1 : 0,
+      );
     }
     const values = [];
     for (let i = 0; i < bits.length; i += 8) {
       let byte = 0;
       for (let b = 0; b < 8; b++) {
-        if (bits[i + b]) byte |= (0x80 >> b);
+        if (bits[i + b]) byte |= 0x80 >> b;
       }
       values.push(hex8(byte));
     }
-    lines.push(`// ${tw * th} pixels, ${values.length} bytes (horizontal bit packing)`);
+    lines.push(
+      `// ${tw * th} pixels, ${values.length} bytes (horizontal bit packing)`,
+    );
     lines.push(`const uint8_t ${varName}[]${progStr} = {`);
     lines.push(...chunkLines(values, bpl));
     lines.push(`};`);
-
-  } else if (format === 'mono_v') {
+  } else if (format === "mono_v") {
     // Vertical page packing for SSD1306 OLED: each byte = 8 vertical pixels per page
     const pages = Math.ceil(th / 8);
     const values = [];
@@ -305,20 +312,22 @@ function generateForImage(item) {
           if (y < th) {
             const i = (y * tw + x) * 4;
             if (toGray(pixels[i], pixels[i + 1], pixels[i + 2]) > threshold) {
-              byte |= (1 << bit);
+              byte |= 1 << bit;
             }
           }
         }
         values.push(hex8(byte));
       }
     }
-    lines.push(`// ${tw}×${th} px → ${pages} pages, ${values.length} bytes (SSD1306 vertical pages)`);
+    lines.push(
+      `// ${tw}x${th} px → ${pages} pages, ${values.length} bytes (SSD1306 vertical pages)`,
+    );
     lines.push(`const uint8_t ${varName}[]${progStr} = {`);
     lines.push(...chunkLines(values, bpl));
     lines.push(`};`);
   }
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /** Entry point: generate code for all loaded images. */
@@ -326,7 +335,7 @@ function generateAll() {
   if (state.images.length === 0) return;
 
   btnGenerate.disabled = true;
-  btnGenerate.textContent = '⏳ Generiere…';
+  btnGenerate.textContent = "⏳ Generiere…";
 
   // Defer so the UI can repaint before heavy canvas work
   setTimeout(() => {
@@ -336,39 +345,39 @@ function generateAll() {
         `// Format: ${selFormat.options[selFormat.selectedIndex].text}`,
         `// ${state.images.length} image(s)\n`,
         `#pragma once`,
-        chkProgmem.checked ? `#include <avr/pgmspace.h>\n` : '',
+        chkProgmem.checked ? `#include <avr/pgmspace.h>\n` : "",
       ];
 
       state.images.forEach((item, idx) => {
-        if (idx > 0) parts.push('');
+        if (idx > 0) parts.push("");
         parts.push(generateForImage(item));
       });
 
-      state.rawCode = parts.join('\n');
+      state.rawCode = parts.join("\n");
       renderCode(state.rawCode);
       updateOutputStats(state.rawCode);
 
-      codePlaceholder.style.display = 'none';
-      codeOutput.style.display      = 'block';
-      btnCopy.disabled               = false;
-      btnDownload.disabled           = false;
+      codePlaceholder.style.display = "none";
+      codeOutput.style.display = "block";
+      btnCopy.disabled = false;
+      btnDownload.disabled = false;
 
-      showToast('✅ Code generiert!');
+      showToast("✅ Code generiert!");
     } catch (e) {
       console.error(e);
-      showToast('❌ Fehler beim Generieren');
+      showToast("❌ Fehler beim Generieren");
     }
 
-    btnGenerate.disabled    = false;
-    btnGenerate.textContent = '⚡ Generieren';
+    btnGenerate.disabled = false;
+    btnGenerate.textContent = "⚡ Generieren";
   }, 30);
 }
 
-btnGenerate.addEventListener('click', generateAll);
+btnGenerate.addEventListener("click", generateAll);
 
 // ─── Syntax Highlighting ──────────────────────────────────────────────────────
 function esc(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function highlightLine(line) {
@@ -376,61 +385,75 @@ function highlightLine(line) {
     return `<span class="tok-cmt">${esc(line)}</span>`;
   }
   if (/^\s*#(pragma|include|ifndef|define|endif)/.test(line)) {
-    return line.replace(/(#\w+)(.*)/, (_, kw, rest) =>
-      `<span class="tok-def">${esc(kw)}</span><span class="tok-str">${esc(rest)}</span>`);
+    return line.replace(
+      /(#\w+)(.*)/,
+      (_, kw, rest) =>
+        `<span class="tok-def">${esc(kw)}</span><span class="tok-str">${esc(rest)}</span>`,
+    );
   }
   if (/^\s*const\s/.test(line)) {
     return line
-      .replace(/\b(const)\b/g,                          '<span class="tok-kw">$1</span>')
-      .replace(/\b(uint16_t|uint8_t|int16_t|int8_t|uint32_t)\b/g, '<span class="tok-type">$1</span>')
-      .replace(/\b(PROGMEM)\b/g,                        '<span class="tok-kw">$1</span>')
-      .replace(/\b([a-zA-Z_]\w*)\b(?=\s*\[\])/,        '<span class="tok-name">$1</span>')
-      .replace(/[{}]/g, m => `<span class="tok-punc">${m}</span>`);
+      .replace(/\b(const)\b/g, '<span class="tok-kw">$1</span>')
+      .replace(
+        /\b(uint16_t|uint8_t|int16_t|int8_t|uint32_t)\b/g,
+        '<span class="tok-type">$1</span>',
+      )
+      .replace(/\b(PROGMEM)\b/g, '<span class="tok-kw">$1</span>')
+      .replace(
+        /\b([a-zA-Z_]\w*)\b(?=\s*\[\])/,
+        '<span class="tok-name">$1</span>',
+      )
+      .replace(/[{}]/g, (m) => `<span class="tok-punc">${m}</span>`);
   }
   if (/0x[0-9A-Fa-f]+/.test(line)) {
-    return line.replace(/0x[0-9A-Fa-f]+/g, m => `<span class="tok-num">${m}</span>`);
+    return line.replace(
+      /0x[0-9A-Fa-f]+/g,
+      (m) => `<span class="tok-num">${m}</span>`,
+    );
   }
   return esc(line);
 }
 
 function renderCode(code) {
-  codeOutput.innerHTML = code.split('\n').map(highlightLine).join('\n');
+  codeOutput.innerHTML = code.split("\n").map(highlightLine).join("\n");
 }
 
 function updateOutputStats(code) {
-  const lines = code.split('\n').length;
-  const kb    = (new TextEncoder().encode(code).length / 1024).toFixed(1);
+  const lines = code.split("\n").length;
+  const kb = (new TextEncoder().encode(code).length / 1024).toFixed(1);
   outputStats.innerHTML = `<span>${lines}</span> Zeilen &nbsp;·&nbsp; <span>${kb}</span> KB`;
 }
 
 // ─── Copy & Download ──────────────────────────────────────────────────────────
-btnCopy.addEventListener('click', () => {
-  navigator.clipboard.writeText(state.rawCode)
-    .then(() => showToast('📋 In Zwischenablage kopiert!'));
+btnCopy.addEventListener("click", () => {
+  navigator.clipboard
+    .writeText(state.rawCode)
+    .then(() => showToast("📋 In Zwischenablage kopiert!"))
+    .catch(() => showToast("❌ Kopieren fehlgeschlagen"));
 });
 
-btnDownload.addEventListener('click', () => {
-  const blob = new Blob([state.rawCode], { type: 'text/plain' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = 'images.h';
+btnDownload.addEventListener("click", () => {
+  const blob = new Blob([state.rawCode], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "images.h";
   a.click();
   URL.revokeObjectURL(url);
-  showToast('⬇ images.h heruntergeladen!');
+  showToast("⬇ images.h heruntergeladen!");
 });
 
 // ─── Clear ────────────────────────────────────────────────────────────────────
-btnClear.addEventListener('click', () => {
-  state.images  = [];
-  state.rawCode = '';
+btnClear.addEventListener("click", () => {
+  state.images = [];
+  state.rawCode = "";
   renderImageList();
   updateButtons();
-  codeOutput.style.display      = 'none';
-  codePlaceholder.style.display = 'flex';
-  outputStats.innerHTML         = '';
-  btnCopy.disabled              = true;
-  btnDownload.disabled          = true;
+  codeOutput.style.display = "none";
+  codePlaceholder.style.display = "flex";
+  outputStats.innerHTML = "";
+  btnCopy.disabled = true;
+  btnDownload.disabled = true;
 });
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -438,7 +461,7 @@ let toastTimer;
 
 function showToast(msg) {
   toast.textContent = msg;
-  toast.classList.add('show');
+  toast.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
 }
